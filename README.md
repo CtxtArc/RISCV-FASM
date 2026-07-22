@@ -10,7 +10,7 @@ Whether you are writing a bare-metal bootloader (`.bin`) or compiling an object 
 
 ---
 
-## ✨ The Kdex Philosophy & Architecture
+##  The Kdex Philosophy & Architecture
 
 * **Dual-Mode Output:**
 * **Relocatable ELF (`-f elf`):** Generates strict, industry-standard object files. Features a smart relocation engine (`R_RISCV_HI20`, `LO12_I`, `CALL`, `JAL`) that perfectly connects your assembly to `gcc` and `ld` without OS segmentation faults. It natively handles complex relocation math (e.g., `la t0, my_buffer + 2048`).
@@ -21,7 +21,7 @@ Whether you are writing a bare-metal bootloader (`.bin`) or compiling an object 
 
 ---
 
-## 🛠️ Build & Requirements
+## Build & Requirements
 
 ### Requirements
 * `make` & standard C compiler (`gcc`/`clang`)
@@ -52,7 +52,7 @@ riscv64-unknown-elf-gcc -march=rv32i -mabi=ilp32 -nostdlib main.c math.o -o prog
 
 ---
 
-## 📝 Syntax & Language Features
+##  Syntax & Language Features
 
 ### The Control-Flow Stack
 Using the internal Logic Stack, you can implement high-level loops and conditionals without dedicating hardware registers for counting.
@@ -109,7 +109,7 @@ print_char '\n'              # Lexer safely handles escapes and chars
 
 ---
 
-## 🚀 Development Roadmap & TODOs
+##  Development Roadmap & TODOs
 
 ### Completed Milestones
 * [x] **Relocatable ELF Output:** Transitioned from a simple flat-binary assembler to a true GNU-compliant toolchain component.
