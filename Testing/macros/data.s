@@ -19,6 +19,8 @@ macro qemu_off
     li t0, 0x100000         # Address of QEMU "SiFive Test" device
     li t1, 0x5555           # 0x5555 = Power Off (Pass)
     sw t1, 0(t0)            # Write to address -> QEMU closes instantly
+  .qemu_off_hang_%u:
+    j .qemu_off_hang_%u
 endm
 
 # ==========================================================

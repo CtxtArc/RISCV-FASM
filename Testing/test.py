@@ -125,7 +125,7 @@ def run_elf_test(filename):
         subprocess.run([ASSEMBLER, "-f", "elf", "-q", "-o", obj_file, filename], cwd=cwd, check=True, capture_output=True)
 
         # 2. Link with GCC
-        link_cmd = ["riscv64-unknown-elf-gcc", "-march=rv32i", "-mabi=ilp32", "-nostdlib", obj_file, "-o", exe_file]
+        link_cmd = ["riscv64-elf-gcc", "-march=rv32i", "-mabi=ilp32", "-nostdlib", obj_file, "-o", exe_file]
         c_file = filename.replace('.s', '.c')
         if os.path.exists(os.path.join(cwd, c_file)): link_cmd.insert(4, c_file)
         subprocess.run(link_cmd, cwd=cwd, check=True, capture_output=True)
@@ -168,7 +168,7 @@ def run_modular_linking_test():
         subprocess.run([ASSEMBLER, "-f", "elf", "-q", "-o", "main.o", "main.s"], cwd=cwd, check=True)
         
         # Link using custom script
-        link_cmd = ["riscv64-unknown-elf-ld", "-m", "elf32lriscv", "-T", "link.ld", "main.o", "kstdlib.o", "-o", "final.elf"]
+        link_cmd = ["riscv64-elf-ld", "-m", "elf32lriscv", "-T", "link.ld", "main.o", "kstdlib.o", "-o", "final.elf"]
         subprocess.run(link_cmd, cwd=cwd, check=True, capture_output=True)
         
         # Run

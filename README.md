@@ -1,61 +1,81 @@
-# A RISC-V macro-assembly language with compiler-like capabilities and ELF toolchain integration.
+<div align="center">
 
-*RISC-V assembler and toolchain written entirely in C. It was built to bridge the gap between raw hardware control and high-level programming logic.*
+# Kdex RISC-V FASM
 
-__If you dont wanna read everything:__ custom RISC-V toolchain + runtime + mini standard library + linker + allocator + ABI + macro DSL
+**A Macro-Assembly Language and Toolchain with Compiler-Like Capabilities**
 
-Unlike traditional bare-bones assemblers, it features a **Stack-Based Macro Engine**, a fully compliant **ELF Relocation Engine**, and its own **Standard Library** (kinda). It allows you to write complex loops, nested conditionals, and dynamic data structures while retaining bit-perfect control over the CPU.
+![C](https://img.shields.io/badge/Language-C-blue.svg)
+![Architecture](https://img.shields.io/badge/Architecture-RV32I-red.svg)
+![Output](https://img.shields.io/badge/Output-ELF%20%7C%20Flat%20Binary-green.svg)
+![License](https://img.shields.io/badge/License-MIT-purple.svg)
 
-Whether you are writing a bare-metal bootloader (`.bin`) or compiling an object file (`.o`) to link with a modern C/C++ codebase via the GNU Linker, Kdex handles the math, the memory, and the machine code.
+*Bridging the gap between raw hardware control and high-level programming logic.*
+
+</div>
 
 ---
 
-##  The Kdex Philosophy & Architecture
+## Overview
 
-* **Dual-Mode Output:**
-* **Relocatable ELF (`-f elf`):** Generates strict, industry-standard object files. Features a smart relocation engine (`R_RISCV_HI20`, `LO12_I`, `CALL`, `JAL`) that perfectly connects your assembly to `gcc` and `ld` without OS segmentation faults. It natively handles complex relocation math (e.g., `la t0, my_buffer + 2048`).
-* **Flat Binary (`-f flat`):** Generates pure, headerless machine code blobs for embedded microcontrollers, bootloaders, or raw QEMU execution based on a strict `.org` origin.
-* **High-Level Macro System:** Infinite logic nesting (loops within loops), variadic arguments (`%n`, `%#`), and automatic scoped labels (`.loop_%u`) to prevent naming collisions.
-* **The Kdex Standard Library (`kstdlib`):** Ships with safe, register-preserving wrappers for Linux syscalls, including `kstdio` (printing), `kfile` (file I/O), and `kstring` (memory operations).
-* **Quality of Life Preprocessor:** Compile-time mutable variables (`=`), recursive file inclusion (`.include`), and a smart lexer that natively understands character literals (`'a'`, `'\n'`).
+Kdex (RISC-V FASM) is a RISC-V assembler and toolchain written entirely in C. It features a stack-based macro engine, an ELF relocation engine, and a minimal standard library. 
+
+The project aims to provide high-level programming constructs—such as loops, nested conditionals, and dynamic data structures—while maintaining precise control over the CPU. Kdex supports both bare-metal environments via flat binaries and GNU Linker integration via ELF object files.
+
+---
+
+## Features
+
+- **Dual-Mode Output:**
+  - **Relocatable ELF (`-f elf`)**: Generates industry-standard object files. The relocation engine handles RISC-V specific relocations (`R_RISCV_HI20`, `LO12_I`, `CALL`, `JAL`) for integration with `gcc` and `ld`.
+  - **Flat Binary (`-f flat`)**: Generates headerless machine code for embedded microcontrollers, bootloaders, or direct QEMU execution starting from a defined `.org` origin.
+- **Macro System**: Supports logic nesting, variadic arguments, and scoped labels (`.loop_%u`) to prevent naming collisions.
+- **Control-Flow Stack**: Provides high-level loop (`while`, `endwhile`) and conditional (`if`, `endif`) statements.
+- **Kdex Standard Library (`kstdlib`)**: Includes register-preserving wrappers for Linux syscalls, covering printing (`kstdio`), file I/O (`kfile`), and memory operations (`kstring`).
+- **Preprocessor**: Evaluates math expressions and character literals at compile-time, handles mutable variables (`=`), and supports recursive file inclusion (`.include`).
 
 ---
 
 ## Build & Requirements
 
-### Requirements
-* `make` & standard C compiler (`gcc`/`clang`)
-* `riscv64-unknown-elf-gcc` / `riscv64-linux-gnu-objdump` (for ELF linking/debugging)
-* `qemu-riscv32` (for execution)
+### Dependencies
+- `make` and a standard C compiler (`gcc` or `clang`)
+- `riscv64-elf-gcc` / `riscv64-elf-ld` (for ELF linking)
+- `qemu-system-riscv32` / `qemu-riscv32` (for execution testing)
 
-### Commands
-
+### Build Commands
 | Command | Description |
 | --- | --- |
-| `make` | Builds the `riscv-fasm` executable from source. |
+| `make` | Builds the `riscv-fasm` executable. |
 | `make run FILE=test.s` | Assembles (flat) and executes a file in QEMU. |
 | `make dump FILE=test.s` | Dumps the symbol table and binary layout for debugging. |
+| `make test` | Runs the automated Kdex test suite. |
 
-### CLI Interface
+---
+
+## CLI Usage
+
+```bash
+./riscv-fasm [options] input.s
+```
 
 | Flag | Long Flag | Description |
 | --- | --- | --- |
-| `-q` | `--quiet` | Silence the UI banner/summary for CI/CD pipelines. |
+| `-q` | `--quiet` | Suppress UI output. |
 | `-f` | `--format` | Set output format (`elf` or `flat`). |
 | `-o` | `--output` | Specify output filename. |
 
 **Example (C-Interop Workflow):**
 ```bash
 ./riscv-fasm -f elf math.s -o math.o
-riscv64-unknown-elf-gcc -march=rv32i -mabi=ilp32 -nostdlib main.c math.o -o program
+riscv64-elf-gcc -march=rv32i -mabi=ilp32 -nostdlib main.c math.o -o program
 ```
 
 ---
 
-##  Syntax & Language Features
+## Syntax & Language Features
 
-### The Control-Flow Stack
-Using the internal Logic Stack, you can implement high-level loops and conditionals without dedicating hardware registers for counting.
+### Control-Flow Stack
+The internal logic stack enables high-level conditionals and loops:
 
 ```assembly
     li t0, 20
@@ -66,8 +86,22 @@ Using the internal Logic Stack, you can implement high-level loops and condition
     endif 
 ```
 
+### Data Modeling & Structs
+The mutable variable system allows for automatic memory layout management.
+
+```assembly
+struct Packet
+    field ID, 4          ; ID = 0
+    array DATA, 128      ; DATA = 4
+    field CRC, 4         ; CRC = 132
+endstruct Packet         ; Packet_SIZE = 136
+
+.data
+    my_packet: .space Packet_SIZE
+```
+
 ### Anonymous Labels (`@@`, `@f`, `@b`)
-For tiny local jumps (skip logic or short loops), use the Anonymous Label System to avoid cluttering your symbol table.
+Anonymous labels provide an alternative for short, local jumps to avoid symbol table pollution.
 
 ```assembly
     mv t0, a0         
@@ -81,44 +115,30 @@ For tiny local jumps (skip logic or short loops), use the Anonymous Label System
     ret
 ```
 
-### Data Modeling & Structs
-Kdex uses a mutable variable system to manage memory layouts automatically.
-
-```assembly
-struct Packet
-    field ID, 4          ; ID = 0
-    array DATA, 128      ; DATA = 4
-    field CRC, 4         ; CRC = 132
-endstruct Packet         ; Packet_SIZE = 136
-
-.data
-    my_packet: .space Packet_SIZE
-```
-
-### Memory Directives & Smart Lexing
-* **Sections:** `.text` (R/X), `.data` (R/W), `.bss`.
-* **Data Types:** `.word`, `.half`, `.byte`, `.asciz`, `.space`, `.fill`.
-* **Visibility:** `.global`, `.extern` for the GNU Linker.
-* **Smart Parsing:** Natively evaluates math and character literals inline.
+### Memory Directives
+- **Sections:** `.text` (R/X), `.data` (R/W), `.bss`.
+- **Data Types:** `.word`, `.half`, `.byte`, `.asciz`, `.space`, `.fill`.
+- **Visibility:** `.global`, `.extern` for the GNU Linker.
 
 ```assembly
 .equ BUFFER_SIZE, 1024 * 2
 li a0, BUFFER_SIZE + 16      # Math is evaluated at compile-time
-print_char '\n'              # Lexer safely handles escapes and chars
+print_char '\n'              # Lexer handles escape characters
 ```
 
 ---
 
-##  Development Roadmap & TODOs
+## Development Roadmap
 
-### Completed Milestones
-* [x] **Relocatable ELF Output:** Transitioned from a simple flat-binary assembler to a true GNU-compliant toolchain component.
-* [x] **Section Separation:** Safe `.text` and `.data` isolation preventing OS segmentation faults.
-* [x] **Relocation Math:** Natively handles addends in ELF mode (e.g., `la t0, my_var + 8`).
-* [x] **Advanced Lexer:** Taught `parse_arg` how to safely read character literals (`'a'`, `'\n'`) and prevent "ghost memory" parsing bugs via zero-initialized buffers.
-* [x] **Recursive Inclusion:** Modularized the standard library by allowing files to include files that include files.
-* [x] **Pseudo-Instruction Expansion:** Added `bltz`, `bgez`, and `neg` to round out the base integer instruction set.
+### Completed
+- [x] Relocatable ELF Output (GNU-compliant).
+- [x] Section Separation (`.text` and `.data` isolation).
+- [x] Relocation Math (handling addends in ELF mode).
+- [x] Advanced Lexer (character literals and zero-initialized buffers).
+- [x] Recursive Inclusion (`.include`).
+- [x] Pseudo-Instruction Expansion (`bltz`, `bgez`, `neg`).
 
-### Next Steps
-* [ ] **Documentation**: compile-time vs runtime rules, macro expansion order, relocation model, struct memory layout rules
-* [ ] **Debug mode**: --dump-macros, --dump-relocations, --trace-expansion
+### Planned
+- [ ] **Documentation**: Compile-time vs runtime rules, macro expansion order, relocation model, struct memory layout rules.
+- [ ] **Debug mode**: `--dump-macros`, `--dump-relocations`, `--trace-expansion`.
+- [ ] **Heap memory**: `kmalloc` / `kfree` standard library functions.

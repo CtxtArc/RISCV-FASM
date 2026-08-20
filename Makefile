@@ -17,7 +17,7 @@ CFLAGS     := -I$(INC_DIR) -Wall -Wextra -Wpedantic -std=c11
 DEBUG      := -g -O0
 
 # RISC-V Cross-Tools
-CROSS      := riscv64-unknown-elf-
+CROSS      := riscv64-elf-
 GCC_RV     := $(CROSS)gcc
 LD_RV      := $(CROSS)ld
 OBJDUMP    := riscv64-linux-gnu-objdump
